@@ -14,9 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          participant1_id: string
+          participant2_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          participant1_id: string
+          participant2_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          participant1_id?: string
+          participant2_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_participant1_id_fkey"
+            columns: ["participant1_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_participant2_id_fkey"
+            columns: ["participant2_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       items: {
         Row: {
           category: Database["public"]["Enums"]["item_category"]
+          community: Database["public"]["Enums"]["community_type"]
           contact_info: string | null
           created_at: string
           date_lost_found: string
@@ -32,6 +82,7 @@ export type Database = {
         }
         Insert: {
           category: Database["public"]["Enums"]["item_category"]
+          community?: Database["public"]["Enums"]["community_type"]
           contact_info?: string | null
           created_at?: string
           date_lost_found: string
@@ -47,6 +98,7 @@ export type Database = {
         }
         Update: {
           category?: Database["public"]["Enums"]["item_category"]
+          community?: Database["public"]["Enums"]["community_type"]
           contact_info?: string | null
           created_at?: string
           date_lost_found?: string
@@ -61,6 +113,45 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -97,6 +188,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      community_type: "school" | "college" | "office" | "public"
       item_category:
         | "electronics"
         | "accessories"
@@ -234,6 +326,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      community_type: ["school", "college", "office", "public"],
       item_category: [
         "electronics",
         "accessories",

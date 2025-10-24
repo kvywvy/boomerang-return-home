@@ -29,6 +29,7 @@ const Submit = () => {
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [community, setCommunity] = useState('public');
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -99,6 +100,7 @@ const Submit = () => {
           date_lost_found: data.date_lost_found,
           contact_info: data.contact_info || null,
           image_url: imageUrl,
+          community: community as any,
         }]);
 
       if (insertError) throw insertError;
@@ -193,6 +195,21 @@ const Submit = () => {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="community">Community/Organization *</Label>
+                <Select value={community} onValueChange={setCommunity}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select community" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="school">School</SelectItem>
+                    <SelectItem value="college">College</SelectItem>
+                    <SelectItem value="office">Office</SelectItem>
+                    <SelectItem value="public">Public Place</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

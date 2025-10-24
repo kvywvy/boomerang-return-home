@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { Package, LogOut, Plus, LayoutDashboard } from 'lucide-react';
+import { Package, LogOut, Plus, LayoutDashboard, MessageSquare } from 'lucide-react';
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
@@ -24,6 +24,12 @@ const Navbar = () => {
                   <Link to="/dashboard">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     Dashboard
+                  </Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link to="/messages">
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Messages
                   </Link>
                 </Button>
                 <Button asChild>

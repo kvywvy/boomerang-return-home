@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Search, MapPin, Calendar, Package } from 'lucide-react';
+import { Loader2, Search, MapPin, Calendar, Package, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Item {
@@ -22,6 +22,8 @@ interface Item {
   image_url: string | null;
   contact_info: string | null;
   created_at: string;
+  user_id: string;
+  community: string;
 }
 
 const Dashboard = () => {
@@ -32,6 +34,7 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [communityFilter, setCommunityFilter] = useState<string>('all');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -67,9 +70,18 @@ const Dashboard = () => {
                          item.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
     const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
+    const matchesCommunity = communityFilter === 'all' || item.community === communityFilter;
     
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch && matchesStatus && matchesCategory && matchesCommunity;
   });
+
+  const handleContactOwner = (itemId: string, ownerId: string) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    navigate(`/messages?itemId=${itemId}&userId=${ownerId}`);
+  };
 
   if (authLoading || !user) {
     return null;
@@ -88,7 +100,7 @@ const Dashboard = () => {
         {/* Filters */}
         <Card className="mb-8">
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -125,6 +137,19 @@ const Dashboard = () => {
                   <SelectItem value="keys">Keys</SelectItem>
                   <SelectItem value="bags">Bags</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={communityFilter} onValueChange={setCommunityFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Community" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Communities</SelectItem>
+                  <SelectItem value="school">School</SelectItem>
+                  <SelectItem value="college">College</SelectItem>
+                  <SelectItem value="office">Office</SelectItem>
+                  <SelectItem value="public">Public Place</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -182,11 +207,21 @@ const Dashboard = () => {
                     <Calendar className="h-4 w-4" />
                     <span>{new Date(item.date_lost_found).toLocaleDateString()}</span>
                   </div>
-                  {item.contact_info && (
-                    <Button variant="outline" className="w-full mt-4">
-                      Contact Owner
-                    </Button>
-                  )}
+                  <div className="flex items-center justify-between mt-4">
+                    {item.contact_info && (
+                      <span className="text-sm text-muted-foreground">{item.contact_info}</span>
+                    )}
+                    {user && user.id !== item.user_id && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleContactOwner(item.id, item.user_id)}
+                        className="ml-auto"
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Contact
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}
