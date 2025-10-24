@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,26 +31,6 @@ const Submit = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [community, setCommunity] = useState('public');
 
-  // Preview modal state
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
-
-  useEffect(() => {
-    // cleanup preview URL when component unmounts
-    return () => {
-      if (imagePreview) {
-        try { URL.revokeObjectURL(imagePreview); } catch {}
-      }
-    };
-  }, [imagePreview]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowPreviewModal(false);
-    };
-    if (showPreviewModal) window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [showPreviewModal]);
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -58,13 +38,8 @@ const Submit = () => {
         toast.error('Image must be less than 5MB');
         return;
       }
-      // revoke old preview if present
-      if (imagePreview) {
-        try { URL.revokeObjectURL(imagePreview); } catch {}
-      }
       setImageFile(file);
-      const objUrl = URL.createObjectURL(file);
-      setImagePreview(objUrl);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
@@ -98,16 +73,12 @@ const Submit = () => {
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop();
         const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
-        // Upload and try to preserve metadata (Supabase client will normally use file.type)
-        // Passing options like cacheControl/upsert can help avoid unexpected downloads in some setups.
+        
         const { error: uploadError } = await supabase.storage
           .from('item-images')
-          .upload(fileName, imageFile, { cacheControl: '3600', upsert: false });
+          .upload(fileName, imageFile);
 
-        if (uploadError) {
-          throw uploadError;
-        }
+        if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
           .from('item-images')
@@ -135,12 +106,6 @@ const Submit = () => {
       if (insertError) throw insertError;
 
       toast.success('Item submitted successfully!');
-      // revoke preview after successful upload
-      if (imagePreview) {
-        try { URL.revokeObjectURL(imagePreview); } catch {}
-        setImagePreview(null);
-        setImageFile(null);
-      }
       navigate('/dashboard');
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -208,7 +173,6 @@ const Submit = () => {
                     <SelectContent>
                       <SelectItem value="lost">Lost</SelectItem>
                       <SelectItem value="found">Found</SelectItem>
-                      <SelectItem value="reunited">Reunited</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -233,15 +197,40 @@ const Submit = () => {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="community">Community/Organization *</Label>
+                <Select value={community} onValueChange={setCommunity}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select community" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="school">School</SelectItem>
+                    <SelectItem value="college">College</SelectItem>
+                    <SelectItem value="office">Office</SelectItem>
+                    <SelectItem value="public">Public Place</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="location">Location *</Label>
-                  <Input id="location" name="location" placeholder="e.g., Library" required />
+                  <Input
+                    id="location"
+                    name="location"
+                    placeholder="e.g., Central Park, NYC"
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="date_lost_found">Date *</Label>
-                  <Input id="date_lost_found" name="date_lost_found" type="date" required />
+                  <Input
+                    id="date_lost_found"
+                    name="date_lost_found"
+                    type="date"
+                    required
+                  />
                 </div>
               </div>
 
@@ -265,18 +254,11 @@ const Submit = () => {
                     className="cursor-pointer"
                   />
                   {imagePreview && (
-                    <button
-                      type="button"
-                      onClick={() => setShowPreviewModal(true)}
-                      className="h-20 w-20 p-0 rounded border overflow-hidden"
-                      aria-label="Open image preview"
-                    >
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="h-full w-full object-cover"
-                      />
-                    </button>
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="h-20 w-20 object-cover rounded border"
+                    />
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">Max file size: 5MB</p>
@@ -299,29 +281,6 @@ const Submit = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Preview Modal */}
-      {showPreviewModal && imagePreview && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setShowPreviewModal(false)}
-        >
-          <div className="relative max-w-[95%] max-h-[95%]">
-            <img
-              src={imagePreview}
-              alt="Image preview"
-              className="max-w-full max-h-[80vh] object-contain rounded"
-              onClick={(e) => e.stopPropagation()}
-            />
-            <button
-              onClick={() => setShowPreviewModal(false)}
-              className="absolute top-2 right-2 bg-white/90 rounded px-3 py-1 text-sm"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
